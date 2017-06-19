@@ -1,0 +1,260 @@
+swagger: "2.0"
+info:
+  version: "0.0.1"
+  title: PostalReport
+# during dev, should point to your local machine
+host: localhost:10010
+# basePath prefixes all resource paths 
+basePath: /prservice
+# 
+schemes: ["http"]
+# tip: remove http to make production-grade
+  
+# format of bodies a client can send (Content-Type)
+consumes:
+  - application/json
+# format of the responses to the client (Accepts)
+produces:
+  - application/json
+  - application/csv
+paths:
+  /reports:
+    x-swagger-router-controller: postalreport
+    post:
+      summary: Generate report
+      description: return a generated report id
+      operationId: genReport
+      parameters:        
+        - name: criteria
+          in: body
+          description: criteria objects
+          required: true
+          schema:
+            $ref: "#/definitions/CriteriaRpt"
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: string
+        "404":
+          description: Can't create crystal report 
+          schema:
+            properties:
+              message: 
+                type: string
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse" 
+  /reports/{reportId}/status:
+    x-swagger-router-controller: postalreport
+    get:
+      summary: Get status by reportId
+      description: return a currect status
+      operationId: getStatusReport
+      parameters:        
+        - name: reportId
+          in: path         
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/ReportStatus'
+        "404":
+          description: The reportId does not exist.
+          schema:
+            properties:
+              message: 
+                type: string
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /reports/{reportId}/rpt:
+    x-swagger-router-controller: postalreport
+    get:
+      summary: Get url by reportId
+      description: return a url status
+      operationId: getURLReport
+      parameters:        
+        - name: reportId
+          in: path         
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: string
+        "404":
+          description: The reportId does not exist.
+          schema:
+            properties:
+              message: 
+                type: string
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse" 
+  /reports/{reportId}/csv:
+    x-swagger-router-controller: postalreport
+    get:
+      summary: Get csv file by reportId
+      description: return a csv 
+      operationId: getExcelReport
+      parameters:        
+        - name: reportId
+          in: path         
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: string
+        "404":
+          description: The reportId does not exist.
+          schema:
+            properties:
+              message: 
+                type: string
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse" 
+  /customers:
+    x-swagger-router-controller: postalreport
+    get:
+      summary: Get customers 
+      description: Return a list containing customers that depends on user type
+      operationId: getCustomers     
+      responses:
+        "200":
+          description: Success
+          schema:
+            # a pointer to a definition
+            $ref: "#/definitions/Customer"
+        "404":
+          description: There is no customers 
+          schema:
+            properties:
+              message: 
+                type: string
+        # responses may fall through to errors
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /menus:
+    x-swagger-router-controller: postalreport
+    get:
+      summary: Get menus 
+      description: Return a list containing menus that depends on user type
+      operationId: getMenus     
+      responses:
+        "200":
+          description: Success
+          schema:
+            # a pointer to a definition
+            $ref: "#/definitions/Menu"
+        # responses may fall through to errors
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /facilities:
+	# binds swagger app logic to a route
+    x-swagger-router-controller: postalreport
+    get:
+      summary: Get facilities 
+      description: Return a list containing all facilities
+	  # used as the method name of the controller
+      operationId: getFacilities
+      responses:
+        "200":
+          description: Success
+          schema:
+            # a pointer to a definition
+            $ref: "#/definitions/Facility"
+        # responses may fall through to errors
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /swagger:
+    x-swagger-pipe: swagger_raw
+# complex objects have schema definitions
+definitions:
+  ErrorResponse:
+    required:
+      - message
+    properties:
+      message:
+        type: string
+  Customer:
+    required:
+        - customerId
+    properties:
+        customerId:
+            type: "string"
+        customerName:
+            type: "string"
+        level:
+            type: "number"
+  Menu:
+    required:
+        - eventClass
+        - sectionDesc
+    properties:
+        eventClass:
+            type: "string"
+            minLength: 2
+        sectionDesc:
+            type: "string"
+        displayName:
+            type: "string"
+        displayDesc:
+            type: "string"
+  Facility:
+    properties:
+        facilityCd:
+            type: "string"
+        facilityNm:
+            type: "string"
+  CriteriaRpt:
+    required:
+        - reportNm
+        - reportType       
+    properties:
+        reportNm:
+          type: "string"
+        customerId:
+          type: "string"
+        customerName:
+          type: "string"      
+        fromDt:
+          format: dateTime
+          type: ["null", "string"]
+        toDt:
+          format: dateTime
+          type: ["null", "string"]
+        runMonth:
+          type: ["null", "string"]
+        runYear:
+          type: ["null", "string"]
+        reportType:
+          type: "string"
+        facilityCd:
+          type: "string"
+        reportRange:
+          type: "string"
+  ReportStatus:
+    type: string
+    enum: &status-list
+      - processing
+      - complete
+      - failed
+      - paused
+      - pending
